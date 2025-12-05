@@ -1,0 +1,41 @@
+[Unit]
+Description=SMS Monitor - USB Modem SMS Receiver
+Documentation=https://github.com/deCASHme/opt
+After=ModemManager.service network.target
+Requires=ModemManager.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+# SMS-Monitor starten
+ExecStart=/usr/local/bin/sms-monitor run
+
+# Automatischer Neustart bei Fehlern
+Restart=always
+RestartSec=10
+
+# Timeout-Konfiguration
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+# Resource Limits
+CPUQuota=10%
+MemoryLimit=100M
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sms-monitor
+
+# Security Hardening (optional - kann bei Problemen auskommentiert werden)
+#NoNewPrivileges=true
+#PrivateTmp=true
+#ProtectSystem=strict
+#ProtectHome=true
+#ReadWritePaths=/var/spool/sms /var/lib/sms-monitor /var/log
+
+[Install]
+WantedBy=multi-user.target

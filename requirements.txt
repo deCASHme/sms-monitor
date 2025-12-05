@@ -1,0 +1,14 @@
+# SMS Monitor Requirements
+# Python 3.7+
+
+# GObject Introspection für ModemManager
+PyGObject>=3.36.0
+
+# Optional: Webhook-Support
+requests>=2.25.0
+
+# System-Pakete (via apt):
+# - python3-gi
+# - gir1.2-mm-1.0
+# - modemmanager
+# - libqmi-utils
