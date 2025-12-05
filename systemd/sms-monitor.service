@@ -1,6 +1,6 @@
 [Unit]
 Description=SMS Monitor - USB Modem SMS Receiver
-Documentation=https://github.com/deCASHme/opt
+Documentation=https://github.com/deCASHme/sms-monitor
 After=ModemManager.service network.target
 Requires=ModemManager.service
 Wants=network.target
@@ -9,9 +9,10 @@ Wants=network.target
 Type=simple
 User=root
 Group=root
+WorkingDirectory=/opt/sms-monitor
 
 # SMS-Monitor starten
-ExecStart=/usr/local/bin/sms-monitor run
+ExecStart=/opt/sms-monitor/venv/bin/sms-monitor run
 
 # Automatischer Neustart bei Fehlern
 Restart=always

@@ -18,7 +18,7 @@ setup(
     long_description_content_type='text/markdown',
     author='deCASHme',
     author_email='',
-    url='https://github.com/deCASHme/opt',
+    url='https://github.com/deCASHme/sms-monitor',
     license='MIT',
 
     packages=find_packages(),
@@ -65,7 +65,7 @@ setup(
     keywords='sms modem usb lte 4g modemmanager simcom',
 
     project_urls={
-        'Bug Reports': 'https://github.com/deCASHme/opt/issues',
-        'Source': 'https://github.com/deCASHme/opt',
+        'Bug Reports': 'https://github.com/deCASHme/sms-monitor/issues',
+        'Source': 'https://github.com/deCASHme/sms-monitor',
     },
 )
