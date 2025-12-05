@@ -32,7 +32,7 @@ Ein einfaches Python-Tool zum Empfangen und Verwalten von SMS über USB 4G/LTE M
 ```bash
 # ModemManager installieren
 sudo apt update
-sudo apt install modemmanager python3-pip python3-gi gir1.2-mm-1.0
+sudo apt install modemmanager python3-pip python3-gi gir1.2-modemmanager-1.0
 
 # ModemManager starten
 sudo systemctl start ModemManager
