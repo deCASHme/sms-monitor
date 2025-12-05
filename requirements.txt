@@ -9,6 +9,6 @@ requests>=2.25.0
 
 # System-Pakete (via apt):
 # - python3-gi
-# - gir1.2-mm-1.0
+# - gir1.2-modemmanager-1.0
 # - modemmanager
 # - libqmi-utils

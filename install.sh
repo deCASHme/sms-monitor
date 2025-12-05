@@ -37,7 +37,7 @@ fi
 
 echo "1. System-Abhängigkeiten installieren..."
 apt update
-apt install -y python3 python3-pip python3-gi gir1.2-mm-1.0 modemmanager libqmi-utils
+apt install -y python3 python3-pip python3-gi gir1.2-modemmanager-1.0 modemmanager libqmi-utils
 
 echo ""
 echo "2. Python-Paket installieren..."
