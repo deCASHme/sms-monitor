@@ -117,39 +117,85 @@ class SMSMonitor:
             True wenn erfolgreich, False bei Fehler
         """
         try:
-            # ModemManager Manager über DBus verbinden
-            mm = Gio.DBusObjectManagerClient.new_for_bus_sync(
-                Gio.BusType.SYSTEM,
-                Gio.DBusObjectManagerClientFlags.NONE,
+            # System-Bus verbinden
+            bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+
+            # ModemManager ObjectManager
+            manager_proxy = Gio.DBusProxy.new_sync(
+                bus,
+                Gio.DBusProxyFlags.NONE,
+                None,
                 'org.freedesktop.ModemManager1',
                 '/org/freedesktop/ModemManager1',
-                None,
+                'org.freedesktop.DBus.ObjectManager',
                 None
             )
 
-            modems = mm.get_objects()
+            # Alle verwalteten Objekte abrufen
+            result = manager_proxy.call_sync(
+                'GetManagedObjects',
+                None,
+                Gio.DBusCallFlags.NONE,
+                -1,
+                None
+            )
 
-            if not modems:
+            # Modem-Pfade extrahieren
+            objects = result[0]
+            modem_paths = [path for path in objects.keys() if '/Modem/' in path]
+
+            if not modem_paths:
                 self.logger.error("Kein Modem gefunden. Ist das USB-Modem angeschlossen?")
                 return False
 
             modem_index = self.config.get('modem_index', 0)
-            if modem_index >= len(modems):
+            if modem_index >= len(modem_paths):
                 self.logger.error(
                     f"Modem-Index {modem_index} ungültig. "
-                    f"Verfügbare Modems: {len(modems)}"
+                    f"Verfügbare Modems: {len(modem_paths)}"
                 )
                 return False
 
-            modem_obj = modems[modem_index]
-            self.modem = modem_obj.get_modem()
-            model = self.modem.get_model()
-            manufacturer = self.modem.get_manufacturer()
+            modem_path = modem_paths[modem_index]
 
-            # Messaging-Interface holen
-            self.messaging = modem_obj.get_modem_messaging()
+            # Modem-Proxy erstellen
+            self.modem_proxy = Gio.DBusProxy.new_sync(
+                bus,
+                Gio.DBusProxyFlags.NONE,
+                None,
+                'org.freedesktop.ModemManager1',
+                modem_path,
+                'org.freedesktop.ModemManager1.Modem',
+                None
+            )
 
-            self.logger.info(f"Modem verbunden: {manufacturer} {model}")
+            # Messaging-Proxy erstellen
+            self.messaging_proxy = Gio.DBusProxy.new_sync(
+                bus,
+                Gio.DBusProxyFlags.NONE,
+                None,
+                'org.freedesktop.ModemManager1',
+                modem_path,
+                'org.freedesktop.ModemManager1.Modem.Messaging',
+                None
+            )
+
+            # Modem-Informationen abrufen
+            manufacturer = self.modem_proxy.get_cached_property('Manufacturer')
+            model = self.modem_proxy.get_cached_property('Model')
+
+            if manufacturer and model:
+                manufacturer_str = manufacturer.unpack() if hasattr(manufacturer, 'unpack') else str(manufacturer)
+                model_str = model.unpack() if hasattr(model, 'unpack') else str(model)
+                self.logger.info(f"Modem verbunden: {manufacturer_str} {model_str}")
+            else:
+                self.logger.info(f"Modem verbunden: {modem_path}")
+
+            # Für Kompatibilität
+            self.modem = self.modem_proxy
+            self.messaging = self.messaging_proxy
+            self.modem_path = modem_path
+
             return True
 
         except Exception as e:
@@ -161,37 +207,67 @@ class SMSMonitor:
         Liste aller SMS vom Modem abrufen
 
         Returns:
-            Liste von SMS-Objekten
+            Liste von SMS-Pfaden
         """
         try:
             if not self.messaging:
                 self.logger.error("Messaging-Interface nicht verfügbar")
                 return []
 
-            sms_list = self.messaging.list()
-            return sms_list
+            # DBus-Call: List() Methode aufrufen
+            result = self.messaging_proxy.call_sync(
+                'List',
+                None,
+                Gio.DBusCallFlags.NONE,
+                -1,
+                None
+            )
+
+            # Ergebnis extrahieren (Liste von SMS-Pfaden)
+            sms_paths = result[0] if result else []
+            return sms_paths
 
         except Exception as e:
             self.logger.error(f"SMS-Liste konnte nicht abgerufen werden: {e}")
             return []
 
-    def parse_sms(self, sms) -> Optional[Dict]:
+    def parse_sms(self, sms_path: str) -> Optional[Dict]:
         """
         SMS-Daten extrahieren
 
         Args:
-            sms: SMS-Objekt von ModemManager
+            sms_path: DBus-Pfad zur SMS
 
         Returns:
             Dictionary mit SMS-Daten oder None bei Fehler
         """
         try:
+            # System-Bus
+            bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
+
+            # SMS-Proxy erstellen
+            sms_proxy = Gio.DBusProxy.new_sync(
+                bus,
+                Gio.DBusProxyFlags.NONE,
+                None,
+                'org.freedesktop.ModemManager1',
+                sms_path,
+                'org.freedesktop.ModemManager1.Sms',
+                None
+            )
+
+            # Properties abrufen
+            number = sms_proxy.get_cached_property('Number')
+            text = sms_proxy.get_cached_property('Text')
+            timestamp = sms_proxy.get_cached_property('Timestamp')
+            state = sms_proxy.get_cached_property('State')
+
             return {
-                'path': sms.get_path(),
-                'number': sms.get_number(),
-                'text': sms.get_text(),
-                'timestamp': sms.get_timestamp(),
-                'state': sms.get_state()
+                'path': sms_path,
+                'number': number.unpack() if number else '',
+                'text': text.unpack() if text else '',
+                'timestamp': timestamp.unpack() if timestamp else '',
+                'state': state.unpack() if state else 0
             }
         except Exception as e:
             self.logger.error(f"SMS-Parsing fehlgeschlagen: {e}")
@@ -277,7 +353,14 @@ class SMSMonitor:
             if not self.messaging:
                 return False
 
-            self.messaging.delete(sms_path)
+            # DBus-Call: Delete() Methode aufrufen
+            self.messaging_proxy.call_sync(
+                'Delete',
+                GLib.Variant('(o)', (sms_path,)),
+                Gio.DBusCallFlags.NONE,
+                -1,
+                None
+            )
             self.logger.debug(f"SMS vom Modem gelöscht: {sms_path}")
             return True
 
