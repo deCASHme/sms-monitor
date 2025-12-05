@@ -137,6 +137,8 @@ mkdir -p /var/spool/sms
 mkdir -p /var/lib/sms-monitor
 mkdir -p /var/log
 touch /var/log/sms-monitor.log
+chown root:adm /var/log/sms-monitor.log
+chmod 664 /var/log/sms-monitor.log
 echo "  ✓ Verzeichnisse erstellt"
 
 # Systemd Service installieren

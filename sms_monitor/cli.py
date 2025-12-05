@@ -88,10 +88,21 @@ def cmd_stats(args):
 
     # Modem-Info (falls verfügbar)
     if monitor.connect_modem():
-        print(f"\nModem:")
-        print(f"  Hersteller: {monitor.modem.get_manufacturer()}")
-        print(f"  Modell:     {monitor.modem.get_model()}")
-        print(f"  Firmware:   {monitor.modem.get_revision()}")
+        try:
+            manufacturer = monitor.modem_proxy.get_cached_property('Manufacturer')
+            model = monitor.modem_proxy.get_cached_property('Model')
+            revision = monitor.modem_proxy.get_cached_property('Revision')
+
+            print(f"\nModem:")
+            if manufacturer:
+                print(f"  Hersteller: {manufacturer.unpack()}")
+            if model:
+                print(f"  Modell:     {model.unpack()}")
+            if revision:
+                print(f"  Firmware:   {revision.unpack()}")
+        except Exception as e:
+            print(f"\nModem:")
+            print(f"  FEHLER: {e}")
 
     print()
 
@@ -105,29 +116,29 @@ def cmd_modem_info(args):
         print("FEHLER: Modem-Verbindung fehlgeschlagen")
         sys.exit(1)
 
-    modem = monitor.modem
-
     print("\n=== Modem-Informationen ===\n")
-    print(f"Hersteller:  {modem.get_manufacturer()}")
-    print(f"Modell:      {modem.get_model()}")
-    print(f"Firmware:    {modem.get_revision()}")
 
     try:
-        print(f"Equipment ID: {modem.get_equipment_identifier()}")
-    except:
-        pass
+        # Properties von DBus-Proxy abrufen
+        manufacturer = monitor.modem_proxy.get_cached_property('Manufacturer')
+        model = monitor.modem_proxy.get_cached_property('Model')
+        revision = monitor.modem_proxy.get_cached_property('Revision')
+        equipment_id = monitor.modem_proxy.get_cached_property('EquipmentIdentifier')
+        state = monitor.modem_proxy.get_cached_property('State')
 
-    try:
-        state = modem.get_state()
-        print(f"Status:      {state}")
-    except:
-        pass
+        if manufacturer:
+            print(f"Hersteller:   {manufacturer.unpack()}")
+        if model:
+            print(f"Modell:       {model.unpack()}")
+        if revision:
+            print(f"Firmware:     {revision.unpack()}")
+        if equipment_id:
+            print(f"Equipment ID: {equipment_id.unpack()}")
+        if state:
+            print(f"Status:       {state.unpack()}")
 
-    try:
-        signal_quality = modem.get_signal_quality()
-        print(f"Signalstärke: {signal_quality}%")
-    except:
-        pass
+    except Exception as e:
+        print(f"FEHLER beim Abrufen der Modem-Informationen: {e}")
 
     print()
 
