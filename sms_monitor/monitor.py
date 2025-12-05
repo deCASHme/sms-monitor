@@ -14,10 +14,10 @@ from typing import Dict, List, Optional
 try:
     import gi
     gi.require_version('ModemManager', '1.0')
-    from gi.repository import ModemManager
+    from gi.repository import ModemManager, GLib, Gio
 except ImportError:
     print("FEHLER: ModemManager GObject Introspection nicht gefunden!")
-    print("Installation: sudo apt install python3-gi gir1.2-mm-1.0")
+    print("Installation: sudo apt install python3-gi gir1.2-modemmanager-1.0")
     sys.exit(1)
 
 from .config import Config
@@ -117,7 +117,16 @@ class SMSMonitor:
             True wenn erfolgreich, False bei Fehler
         """
         try:
-            mm = ModemManager.ModemManager.get_default()
+            # ModemManager Manager über DBus verbinden
+            mm = Gio.DBusObjectManagerClient.new_for_bus_sync(
+                Gio.BusType.SYSTEM,
+                Gio.DBusObjectManagerClientFlags.NONE,
+                'org.freedesktop.ModemManager1',
+                '/org/freedesktop/ModemManager1',
+                None,
+                None
+            )
+
             modems = mm.get_objects()
 
             if not modems:
@@ -132,12 +141,13 @@ class SMSMonitor:
                 )
                 return False
 
-            self.modem = modems[modem_index]
+            modem_obj = modems[modem_index]
+            self.modem = modem_obj.get_modem()
             model = self.modem.get_model()
             manufacturer = self.modem.get_manufacturer()
 
             # Messaging-Interface holen
-            self.messaging = self.modem.get_messaging()
+            self.messaging = modem_obj.get_modem_messaging()
 
             self.logger.info(f"Modem verbunden: {manufacturer} {model}")
             return True
