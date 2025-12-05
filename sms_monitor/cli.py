@@ -164,7 +164,7 @@ Beispiele:
   %(prog)s modem-info             # Modem-Informationen
   %(prog)s config --show          # Konfiguration anzeigen
 
-Weitere Informationen: https://github.com/deCASHme/opt
+Weitere Informationen: https://github.com/deCASHme/sms-monitor
         """
     )
 

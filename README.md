@@ -47,8 +47,8 @@ mmcli -m 0  # Falls Modem mit SIM-PIN gesperrt: mmcli -i 0 --pin=XXXX
 
 ```bash
 # Repository klonen
-git clone https://github.com/deCASHme/opt.git
-cd opt
+git clone https://github.com/deCASHme/sms-monitor.git
+cd sms-monitor
 
 # Installation ausführen
 sudo ./install.sh
@@ -314,8 +314,8 @@ opt/
 
 ```bash
 # Development-Installation
-git clone https://github.com/deCASHme/opt.git
-cd opt
+git clone https://github.com/deCASHme/sms-monitor.git
+cd sms-monitor
 
 # Virtual Environment erstellen
 python3 -m venv venv
@@ -359,8 +359,8 @@ Dieses Projekt ist lizenziert unter der MIT-Lizenz - siehe [LICENSE](LICENSE) Da
 
 Bei Fragen oder Problemen:
 
-- GitHub Issues: [https://github.com/deCASHme/opt/issues](https://github.com/deCASHme/opt/issues)
-- Dokumentation: [https://github.com/deCASHme/opt](https://github.com/deCASHme/opt)
+- GitHub Issues: [https://github.com/deCASHme/sms-monitor/issues](https://github.com/deCASHme/sms-monitor/issues)
+- Dokumentation: [https://github.com/deCASHme/sms-monitor](https://github.com/deCASHme/sms-monitor)
 
 ## Changelog
 

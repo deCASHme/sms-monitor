@@ -8,6 +8,10 @@
 
 set -e
 
+INSTALL_DIR="/opt/sms-monitor"
+CONFIG_DIR="/etc/sms-monitor"
+BIN_LINK="/usr/local/bin/sms-monitor"
+
 # Farben für Ausgabe
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -29,12 +33,12 @@ fi
 echo -e "${YELLOW}Warnung: Dies entfernt den SMS Monitor vom System.${NC}"
 echo ""
 echo "Folgende Komponenten werden entfernt:"
-echo "  - SMS Monitor Python-Paket"
+echo "  - SMS Monitor Installation ($INSTALL_DIR)"
 echo "  - Systemd Service"
-echo "  - CLI-Tool (/usr/local/bin/sms-monitor)"
+echo "  - CLI-Tool ($BIN_LINK)"
 echo ""
 echo "Optional werden auch entfernt:"
-echo "  - Konfigurationsdateien (/etc/sms-monitor)"
+echo "  - Konfigurationsdateien ($CONFIG_DIR)"
 echo "  - Gespeicherte SMS (/var/spool/sms)"
 echo "  - Log-Dateien (/var/log/sms-monitor.log)"
 echo ""
@@ -59,8 +63,8 @@ if [[ $REPLY =~ ^[Jj]$ ]]; then
     echo -e "${GREEN}Erstelle Backup in: $BACKUP_DIR${NC}"
 
     # Konfiguration sichern
-    if [ -d /etc/sms-monitor ]; then
-        cp -r /etc/sms-monitor "$BACKUP_DIR/"
+    if [ -d "$CONFIG_DIR" ]; then
+        cp -r "$CONFIG_DIR" "$BACKUP_DIR/"
         echo "  ✓ Konfiguration gesichert"
     fi
 
@@ -108,25 +112,27 @@ if [ -f /etc/systemd/system/sms-monitor.service ]; then
     echo "  ✓ Service-Datei entfernt"
 fi
 
-# 3. CLI-Tool entfernen
-if [ -L /usr/local/bin/sms-monitor ] || [ -f /usr/local/bin/sms-monitor ]; then
-    echo "Entferne CLI-Tool..."
-    rm -f /usr/local/bin/sms-monitor
-    echo "  ✓ CLI-Tool entfernt"
+# 3. CLI-Tool Symlink entfernen
+if [ -L "$BIN_LINK" ] || [ -f "$BIN_LINK" ]; then
+    echo "Entferne CLI-Tool Symlink..."
+    rm -f "$BIN_LINK"
+    echo "  ✓ CLI-Tool Symlink entfernt"
 fi
 
-# 4. Python-Paket deinstallieren
-echo "Deinstalliere Python-Paket..."
-pip3 uninstall -y sms-monitor 2>/dev/null || true
-echo "  ✓ Python-Paket entfernt"
+# 4. Installations-Verzeichnis entfernen
+if [ -d "$INSTALL_DIR" ]; then
+    echo "Entferne Installations-Verzeichnis..."
+    rm -rf "$INSTALL_DIR"
+    echo "  ✓ Installation entfernt ($INSTALL_DIR)"
+fi
 
 # 5. Konfiguration entfernen (optional)
 echo ""
-if [ -d /etc/sms-monitor ]; then
-    read -p "Konfiguration entfernen? (/etc/sms-monitor) (j/n) " -n 1 -r
+if [ -d "$CONFIG_DIR" ]; then
+    read -p "Konfiguration entfernen? ($CONFIG_DIR) (j/n) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Jj]$ ]]; then
-        rm -rf /etc/sms-monitor
+        rm -rf "$CONFIG_DIR"
         echo "  ✓ Konfiguration entfernt"
     else
         echo "  ⊗ Konfiguration beibehalten"
@@ -188,7 +194,7 @@ fi
 
 # Zusammenfassung der verbleibenden Dateien
 REMAINING=()
-[ -d /etc/sms-monitor ] && REMAINING+=("  - /etc/sms-monitor (Konfiguration)")
+[ -d "$CONFIG_DIR" ] && REMAINING+=("  - $CONFIG_DIR (Konfiguration)")
 [ -d /var/spool/sms ] && REMAINING+=("  - /var/spool/sms (SMS-Daten)")
 [ -d /var/lib/sms-monitor ] && REMAINING+=("  - /var/lib/sms-monitor (Verarbeitete SMS)")
 [ -f /var/log/sms-monitor.log ] && REMAINING+=("  - /var/log/sms-monitor.log (Logs)")
