@@ -77,19 +77,19 @@ cp "$SCRIPT_DIR/LICENSE" "$INSTALL_DIR/" 2>/dev/null || true
 
 echo "  ✓ Dateien kopiert nach $INSTALL_DIR"
 
-# Virtual Environment erstellen
+# Virtual Environment erstellen (mit System-Paketen)
 echo ""
 echo "4. Virtual Environment erstellen..."
 cd "$INSTALL_DIR"
-python3 -m venv venv
-echo "  ✓ venv erstellt"
+python3 -m venv --system-site-packages venv
+echo "  ✓ venv erstellt (mit Zugriff auf System-Pakete)"
 
 # Python-Pakete installieren
 echo ""
 echo "5. Python-Abhängigkeiten installieren..."
 source venv/bin/activate
 pip install --upgrade pip
-pip install PyGObject requests
+pip install requests
 pip install -e .
 deactivate
 echo "  ✓ Abhängigkeiten installiert"
